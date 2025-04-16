@@ -1,0 +1,74 @@
+Included code were designed to accomplish mini project "Mini Salesforce Evaluation Project", satisfying the below:
+
+1. Apex Trigger:
+- A trigger on the Opportunity object that fires on insert and update events.
+--- Done
+- The trigger should delegate logic to a separate handler class.
+--- Done
+2. Handler/Service Class:
+- An Apex class that contains the logic to:
+§ Check whether each Opportunity qualifies as “high value.”
+--- Done
+§ Update the Opportunity.
+--- Done
+§ Log (or record) the audit event.
+--- Done
+3. Unit Test Class:
+- A test class that covers the trigger and handler logic.
+--- Done
+- Include test methods for:
+§ Insertion of a single high-value Opportunity.
+--- Done
+§ Bulk insertion (multiple records).
+--- Done
+§ Updates that change the Opportunity from low value to high value.
+--- Done
+§ Test coverage for error conditions (if any).
+--- Done
+4. Architecture Comments:
+- The code created were designed to adhere with Salesforce's best practices including:
+a) Code Bulkification
+--- To support processing of multiple records without hitting governor limits
+b) Separation of Concerns
+--- To properly separate actions/logic per process
+c) Error Handling
+--- To ensure that all records will be executed
+d) Test Coverage
+--- Code coverage of higher than 75%, to ensure deployment to Prod Environment
+
+Important Considerations:
+
+1. If we shall apply the process to already existing Opportunities.
+2. Opportunity_Audit__c relation (lookup, master, etc) to Opportunity
+3. Amount (Opportunity_Audit__c) should have the same format/field type as the Amount in Opportunity (Currency Type, 16,2)
+4. Correct naming conventions should be followed
+5. Opportunity Id (Opportunity_Audit__c) should be set to 18 chars
+6. Timestamp should be a dateTime field
+7. Creation of tab for Opportunity Audit object to include in Apps
+8. TimeZone class for Timestamp to return DateTime in EST, PST or in any other required/neeed timezones
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
