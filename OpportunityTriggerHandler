@@ -1,0 +1,64 @@
+/* =====================================================================================
+Developer's comment here:
+
+Created by:
+Created date:
+Test class:
+
+Changes:
+Developer's name - ticket # - date - line numbers
+===================================================================================== */ 
+public class OpportunityTriggerHandler{
+    //Static variable declaration for processOpportunities method
+    private static Boolean isProcessing = false;
+
+    public static void processOpportunities(List<Opportunity> opportunities){
+        //Check if class is processing already to avoid recursion
+        if(isProcessing){
+            return;
+        }
+        isProcessing = true;
+
+        List<Opportunity_Audit__c> auditRecordsForInsert = new List<Opportunity_Audit__c>();
+        List<Opportunity> opportunitiesForUpdate = new List<Opportunity>();
+
+        for(Opportunity opp : opportunities){
+            //Check if opp Amount is greater than $500000
+            if(opp.Amount > 500000){
+                Opportunity_Audit__c auditRecord = new Opportunity_Audit__c();
+                auditRecord.Opportunity_ID__c = opp.Id; 
+                auditRecord.Amount__c = opp.Amount; 
+                auditRecord.Timestamp__c = System.now();
+                auditRecordsForInsert.add(auditRecord);
+
+                //sObject declaration for new Opportunity since record is read-only during after trigger
+                Opportunity updatedOpp = new Opportunity(Id = opp.Id);
+                    updatedOpp.High_Value__c = true; 
+                    opportunitiesForUpdate.add(updatedOpp);
+            }
+        }
+
+        //Create Audit records
+        if(!auditRecordsForInsert.isEmpty()){
+            try{
+                insert auditRecordsForInsert;
+            }catch(DMLException e){
+                //Error handling
+                System.debug('Error/s in inserting Audit records: ' + e.getMessage() + ', kinlyd notify your System Admin immediately');
+            }
+        }
+
+        //Update Opportunities
+        if(!opportunitiesForUpdate.isEmpty()){
+            try{
+                update opportunitiesForUpdate;
+            }catch(DMLException e){
+                //Error handling
+                System.debug('Error/s in updating Opportunities: ' + e.getMessage()); 
+            }
+        }
+
+        //Reset the static variable once processed
+        isProcessing = false;
+    }
+}
