@@ -16,77 +16,99 @@ public class OpportunityTriggerHandlerTest{
     static void testOpportunityTrigger_SingleRecordPositiveTest(){
         //Insert Opportunity with Amount > 500000
         Opportunity opp1 = new Opportunity(Name = 'Opportunity 1', Amount = 600000, StageName = 'Closed Won', CloseDate = Date.today());
-        insert opp1;
+        	insert opp1;
 
-        //Check Audit insert outcome
+        //Check Audit insert outcome, Audit record should be created
         List<Opportunity_Audit__c> audits = [SELECT Id, Opportunity_ID__c, Amount__c FROM Opportunity_Audit__c WHERE Opportunity_ID__c = :opp1.Id];
-        System.assertEquals(1, audits.size());
-        System.assertEquals(opp1.Amount, audits[0].Amount__c);
+            System.assertEquals(1, audits.size());
+            System.assertEquals(opp1.Amount, audits[0].Amount__c);
 
         //Check if "High Value" is checked
         Opportunity updatedOpp1 = [SELECT High_Value__c FROM Opportunity WHERE Id = :opp1.Id];
-        System.assert(updatedOpp1.High_Value__c);
+        	System.assert(updatedOpp1.High_Value__c);
     }
 
     @isTest
     static void testOpportunityTrigger_SingleRecordNegativeTest() {
         //Insert Opportunity with Amount < 500000
         Opportunity opp2 = new Opportunity(Name = 'Opportunity 2', Amount = 2000, StageName = 'Closed Won', CloseDate = Date.today());
-        insert opp2;
+        	insert opp2;
 
-        //Check Audit insert outcome
+        //Check Audit insert outcome, Audit record should not be created
         List<Opportunity_Audit__c> audits = [SELECT Id FROM Opportunity_Audit__c WHERE Opportunity_ID__c = :opp2.Id];
-        System.assertEquals(0, audits.size());
+        	System.assertEquals(0, audits.size());
 
         //Check if "High Value" is checked
         Opportunity updatedOpp2 = [SELECT Important__c FROM Opportunity WHERE Id = :opp2.Id];
-        System.assert(!updatedOpp2.High_Value__c);
+        	System.assert(!updatedOpp2.High_Value__c);
     }
 
     @isTest
     static void testOpportunityTrigger_BulkTest() {
         //Insert Opportunities > 500000
         List<Opportunity> opportunities = new List<Opportunity>();
-        for (Integer i = 0; i < 10; i++) {
-            opportunities.add(new Opportunity(Name = 'Opportunity Test ' + i, Amount = 2400 + i * 100, StageName = 'Closed Won', CloseDate = Date.today()));
-        }
-        insert opportunities;
+            for(Integer i = 0; i < 10; i++){
+                opportunities.add(new Opportunity(Name = 'Opportunity Test ' + i, Amount = 2400 + i * 100, StageName = 'Closed Won', CloseDate = Date.today()));
+            }
+        		insert opportunities;
 
         //Get Ids of the inserted Opportunities
         List<Id> opportunityIds = new List<Id>();
-        for(Opportunity opp : opportunities){
-            opportunityIds.add(opp.Id);
-        }
+        	for(Opportunity opp : opportunities){
+            	opportunityIds.add(opp.Id);
+        	}
 
-        //Check Audit outcomes
+        //Check Audit/Oppors sizes
         List<Opportunity_Audit__c> audits = [SELECT Id, Opportunity_ID__c FROM Opportunity_Audit__c WHERE Opportunity_ID__c IN :opportunityIds];
-        System.assertEquals(opportunities.size(), audits.size());
+        	System.assertEquals(opportunities.size(), audits.size());
 
         //Check if Opportunities' High Value were checked
         List<Opportunity> updatedOpportunities = [SELECT Important__c FROM Opportunity WHERE Id IN :opportunityIds];
-        for(Opportunity opp : updatedOpportunities){
-            System.assert(opp.High_Value__c);
-        }
+            for(Opportunity opp : updatedOpportunities){
+                System.assert(opp.High_Value__c);
+            }
     }
 
     @isTest
     static void testOpportunityTrigger_ErrorHandling() {
         //Insert Opportunity with Amount > 500000
-        Opportunity opp3 = new Opportunity(Name = 'Test Opportunity 3', Amount = 2500, StageName = 'Closed Won', CloseDate = Date.today());
-        insert opp3;
+        Opportunity opp3 = new Opportunity(Name = 'Opportunity 3', Amount = 2500, StageName = 'Closed Won', CloseDate = Date.today());
+        	insert opp3;
 
         //Check that the Opportunity is still marked as High Value even if the Audit record is not created
         Opportunity updatedOpp3 = [SELECT Important__c FROM Opportunity WHERE Id = :opp3.Id];
-        System.assert(updatedOpp3.High_Value__c);
+        	System.assert(updatedOpp3.High_Value__c);
     }
 
     @isTest
     static void testOpportunityTrigger_DmlExceptionHandling() {
         //Insert Opportunity with Amount > 500000
-        Opportunity opp4 = new Opportunity(Name = 'Test Opportunity 4', Amount = 6000000, StageName = 'Closed Won', CloseDate = Date.today());
-        insert opp4;
+        Opportunity opp4 = new Opportunity(Name = 'Opportunity 4', Amount = 6000000, StageName = 'Closed Won', CloseDate = Date.today());
+        	insert opp4;
         
     }
-        
     
+    @isTest
+	static void testOpportunityUpdate_LowToHighValue(){
+        //Insert Opportunity with Amount < 500000
+        Opportunity opp = new Opportunity(Name = 'Test Opportunity Low Value', Amount = 2000, StageName = 'Closed Won', CloseDate = Date.today());
+        	insert opp;
+
+        //Check Audit outcomes, Audit should not be created
+        List<Opportunity_Audit__c> initialAudit = [SELECT Id FROM Opportunity_Audit__c WHERE Opportunity_ID__c = :opp.Id];
+        	System.assertEquals(0, initialAudit.size());
+
+        //Update the Opportunity to a High Value
+            opp.Amount = 700000; 
+            	update opp;
+
+        //Check if Audit record is created after the update
+        List<Opportunity_Audit__c> updatedAudit = [SELECT Id, Opportunity_ID__c, Amount__c FROM Opportunity_Audit__c WHERE Opportunity_ID__c = :opp.Id];
+            System.assertEquals(1, updatedAudit.size());
+            System.assertEquals(opp.Amount, updatedAudit[0].Amount__c);
+
+        //Check if Opportunity is marked as Important
+        Opportunity updatedOpp = [SELECT Important__c FROM Opportunity WHERE Id = :opp.Id];
+        	System.assert(updatedOpp.Important__c); 
+	}
 }
